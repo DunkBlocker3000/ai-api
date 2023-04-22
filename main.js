@@ -1,12 +1,10 @@
-const generateButton = document.getElementById('generate-button');
+const generateBtn = document.getElementById('generate-btn');
+const createTestsBtn = document.getElementById('create-tests-btn');
 const scenarioList = document.getElementById('scenario-list');
 
-generateButton.addEventListener('click', async () => {
-  const inputText = document.getElementById('input-text');
-  const text = inputText ? inputText.value : null;  // null check added here
-
-  if (!text) {
-    console.error('Input text is null or empty.');
+generateBtn.addEventListener('click', async () => {
+  const inputText = document.getElementById('input-text').value;
+  if (!inputText) {
     return;
   }
 
@@ -16,30 +14,18 @@ generateButton.addEventListener('click', async () => {
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ text })
+      body: JSON.stringify({
+        text: inputText
+      })
     });
-
-    const { scenarios } = await response.json();
-
-    scenarioList.innerHTML = '';
-
-    scenarios.forEach((scenario, index) => {
-      const scenarioItem = document.createElement('li');
-
-      const input = document.createElement('input');
-      input.type = 'radio';
-      input.name = 'scenario';
-      input.value = index;
-
-      const label = document.createElement('label');
-      label.innerText = scenario;
-
-      scenarioItem.appendChild(input);
-      scenarioItem.appendChild(label);
-
-      scenarioList.appendChild(scenarioItem);
-    });
+    if (response.status === 200) {
+      const scenarioData = await response.json();
+      const scenarios = scenarioData.choices.map((choice) => choice.text);
+      renderScenarioList(scenarios);
+      createTestsBtn.style.display = 'block';
+    } else {
+      throw new Error(`Failed to generate scenarios: ${response.status}`);
+    }
   } catch (error) {
-    console.error(`Failed to generate scenarios: ${error.message}`);
-  }
-});
+    console.error(error);
+    alert(`Failed
