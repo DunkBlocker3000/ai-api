@@ -1,49 +1,73 @@
-const generateRequests = async (docUrl, selectedScenarios) => {
-  const docText = await fetchDocText(docUrl);
-  const scenarios = extractScenarios(docText);
-  const requests = scenarios.filter((scenario) => selectedScenarios.includes(scenario.name)).map((scenario) => {
-    const requestBody = generateRequestBody(scenario);
-    const request = generateCurlRequest(scenario.method, scenario.url, requestBody);
-    return request;
-  });
-  return requests;
-};
+// Set up OpenAI API key
+const apiKey = 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; // **Provide your OpenAI API key here**
 
-const fetchDocText = async (docUrl) => {
-  const response = await fetch(docUrl);
-  const text = await response.text();
-  return text;
-};
-
-const extractScenarios = (docText) => {
-  // Use ChatGPT to extract scenarios
-  const prompt = `Extract the scenarios from the following API documentation:\n\n${docText}\n\n`;
-  const scenariosText = generateText(prompt);
-  const scenarios = JSON.parse(scenariosText);
-  return scenarios;
-};
-
-const generateRequestBody = (scenario) => {
-  // Use ChatGPT to generate request body
-  const prompt = `Generate the request body for the following scenario:\n\n${JSON.stringify(scenario, null, 2)}\n\n`;
-  const requestBody = generateText(prompt);
-  return requestBody;
-};
-
-const generateCurlRequest = (method, url, requestBody) => {
-  let curlRequest = `curl -X ${method} ${url}`;
-  if (requestBody) {
-    curlRequest += ` -d '${requestBody}'`;
+function generateScenarios() {
+  const docUrl = document.getElementById('docUrl').value;
+  const endpointList = analyzeDocumentation(docUrl);
+  const scenarioList = generateScenarioList(endpointList);
+  const scenarioListElem = document.getElementById('scenarioList');
+  scenarioListElem.innerHTML = '';
+  for (const scenario of scenarioList) {
+    const scenarioElem = document.createElement('p');
+    scenarioElem.innerText = scenario;
+    scenarioListElem.appendChild(scenarioElem);
   }
-  return curlRequest;
-};
+}
 
-const generateText = async (prompt) => {
-  // Use OpenAI API to generate text
-  const response = await fetch('https://api.openai.com/v1/engines/davinci-codex/completions', {
+async function analyzeDocumentation(docUrl) {
+  // Call OpenAI API to analyze documentation
+  const prompt = `Please analyze the documentation at this URL: ${docUrl}`;
+  const result = await getOpenAIResponse(prompt, apiKey);
+  const endpointList = JSON.parse(result.choices[0].text);
+  return endpointList;
+}
+
+function generateScenarioList(endpointList) {
+  const scenarioList = [];
+  for (const endpoint of endpointList) {
+    const scenario = generateScenario(endpoint);
+    scenarioList.push(scenario);
+  }
+  return scenarioList;
+}
+
+function generateScenario(endpoint) {
+  const method = endpoint.method.toUpperCase();
+  const path = endpoint.path;
+  const requiredParams = endpoint.required_params;
+  const optionalParams = endpoint.optional_params;
+  const scenario = `${method} ${path}\n`;
+  if (requiredParams.length > 0) {
+    scenario += 'Required Parameters:\n';
+    for (const param of requiredParams) {
+      scenario += `- ${param}\n`;
+    }
+  }
+  if (optionalParams.length > 0) {
+    scenario += 'Optional Parameters:\n';
+    for (const param of optionalParams) {
+      scenario += `- ${param}\n`;
+    }
+  }
+  return scenario;
+}
+
+async function getOpenAIResponse(prompt, apiKey) {
+  const requestOptions = {
     method: 'POST',
-headers: {
-    'Content-Type': 'application/json',
-    'Authorization': 'Bearer ' + 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
-},
-    body:
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`
+    },
+    body: JSON.stringify({
+      'prompt': prompt,
+      'temperature': 0.7,
+      'max_tokens': 60,
+      'n': 1,
+      'stop': '\n'
+    })
+  };
+  const response = await fetch('https://api.openai.com/v1/engines/davinci-codex/completions', requestOptions);
+  const data = await response.json();
+  return data;
+}
