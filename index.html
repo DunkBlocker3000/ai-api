@@ -1,18 +1,25 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <title>API Scenario Generator</title>
   </head>
+
   <body>
-    <h1>API Scenario Generator</h1>
-    <form>
-      <label for="apiUrl">API Documentation URL:</label>
-      <input type="text" id="apiUrl" name="apiUrl"><br><br>
-      <button type="button" id="generateBtn">Generate Scenarios</button>
-    </form>
-    <p id="loadingMsg"></p>
-    <ul id="scenarios"></ul>
+    <div>
+      <h1>API Scenario Generator</h1>
+      <p>Enter the URL of an API documentation page below to generate example scenarios.</p>
+      <form>
+        <label for="url-input">API URL:</label>
+        <input type="text" id="url-input" name="url" placeholder="Enter URL..." required />
+        <button type="submit" id="generate-button">Generate Scenarios</button>
+      </form>
+    </div>
+    <div>
+      <h2>Generated Scenarios:</h2>
+      <p id="note"></p>
+      <ul id="scenarios"></ul>
+    </div>
     <script src="main.js"></script>
   </body>
 </html>
