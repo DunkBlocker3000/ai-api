@@ -1,23 +1,19 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>API Test Scenario Generator</title>
-  </head>
-  <body>
-    <h1>API Test Scenario Generator</h1>
-    <h3>Enter API Documentation URL:</h3>
-    <input type="text" id="urlInput" />
-    <button onclick="generateScenariosFromUrl()">Generate Scenarios</button>
-    <h3>OR paste API documentation below:</h3>
-    <textarea id="apiTextArea"></textarea>
-    <button onclick="generateScenariosFromText()">Generate Scenarios</button>
-    <hr />
-    <h2>Generated Scenarios:</h2>
-    <ul id="scenariosList"></ul>
-
-    <script src="main.js"></script>
-  </body>
+<html>
+<head>
+	<title>API Test Scenarios Generator</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<script src="main.js"></script>
+</head>
+<body>
+	<h1>API Test Scenarios Generator</h1>
+	<p>Enter API documentation URL or paste API documentation below:</p>
+	<form>
+		<input type="url" id="api-url" placeholder="API Documentation URL" required>
+		<textarea id="api-text" placeholder="Paste API documentation"></textarea>
+		<button type="submit" onclick="generateScenarios(event)">Generate Test Scenarios</button>
+	</form>
+	<div id="scenarios"></div>
+</body>
 </html>
