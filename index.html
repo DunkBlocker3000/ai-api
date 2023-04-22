@@ -1,24 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>OpenAI GPT-3 Demo</title>
-    <script src="https://cdn.jsdelivr.net/npm/@openai/api@0.9.0/dist/web.min.js"></script>
-  </head>
-  <body>
-    <h1>OpenAI GPT-3 Demo</h1>
-    <form>
-      <label for="input">Enter Text or URL:</label>
-      <br />
-      <textarea id="input" name="input" rows="5"></textarea>
-      <br />
-      <button type="button" id="generate-btn">Generate Scenarios</button>
-    </form>
-    <br />
-    <h2>Output:</h2>
-    <div id="output"></div>
-    <script src="main.js"></script>
-  </body>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>OpenAI Scenario Generator</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>OpenAI Scenario Generator</h1>
+  <div class="input-container">
+    <label for="input-text">Enter Text:</label>
+    <textarea id="input-text" name="input-text" rows="10"></textarea>
+    <label for="input-url">Or Enter URL:</label>
+    <input type="text" id="input-url" name="input-url">
+    <button id="generate-button">Generate Scenarios</button>
+  </div>
+  <div id="output-container"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@openai/api@0.11.0/dist/web.min.js"></script>
+  <script src="main.js"></script>
+</body>
 </html>
