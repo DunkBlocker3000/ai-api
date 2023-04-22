@@ -1,112 +1,75 @@
-const generateScenarios = async () => {
-  const submitButton = document.querySelector("#submit-button");
-  submitButton.disabled = true;
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
-  const promptInput = document.querySelector("#prompt");
-  const prompt = promptInput.value;
-
-  const temperatureInput = document.querySelector("#temperature");
-  const temperature = parseFloat(temperatureInput.value);
-
-  const maxTokensInput = document.querySelector("#max-tokens");
-  const maxTokens = parseInt(maxTokensInput.value);
-
-  const nScenariosInput = document.querySelector("#n-scenarios");
-  const nScenarios = parseInt(nScenariosInput.value);
-
-  const outputDiv = document.querySelector("#output");
-  outputDiv.innerHTML = "";
-
-  const model = "text-davinci-002";
-  const endpoint = "https://api.openai.com/v1/engines/" + model + "/completions";
-
-  const responseList = await Promise.all(
-    Array.from(Array(nScenarios).keys()).map(async () => {
-      const data = {
-        prompt: prompt,
-        temperature: temperature,
-        max_tokens: maxTokens,
-      };
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${sk}`,
-        },
-        body: JSON.stringify(data),
-      });
-      const responseJSON = await response.json();
-      return responseJSON.choices[0].text;
-    })
-  );
-
-  const scenarioList = responseList.map((response) => response.trim());
-  generateScenarioList(scenarioList);
-  submitButton.disabled = false;
-};
-
-const generateScenarioList = (scenarioList) => {
-  const outputDiv = document.querySelector("#output");
-
-  const scenarioListHTML = scenarioList
-    .map((scenario) => {
-      return `
-      <div class="scenario">
-        <p>${scenario}</p>
-      </div>
-    `;
-    })
-    .join("");
-
-  outputDiv.innerHTML = scenarioListHTML;
-
-  const copyButtonList = document.querySelectorAll(".copy-button");
-
-  copyButtonList.forEach((button, i) => {
-    button.onclick = () => {
-      navigator.clipboard.writeText(scenarioList[i]);
-      alert("Copied scenario to clipboard!");
-    };
-  });
-};
-
-const analyzeDocumentation = async () => {
-  const submitButton = document.querySelector("#submit-doc-button");
-  submitButton.disabled = true;
-
-  const docInput = document.querySelector("#documentation");
-  const documentText = docInput.value;
-
-  const model = "text-davinci-002";
-  const endpoint = "https://api.openai.com/v1/engines/" + model + "/completions";
-
-  const data = {
-    prompt: "Analyze the following documentation and list out potential use cases:",
-    temperature: 0.5,
-    max_tokens: 1024,
-    prompt_suffix: `\n\nDocumentation:\n${documentText}`,
-  };
-
-  const response = await fetch(endpoint, {
+async function analyzeDocumentation(prompt) {
+  const response = await fetch("https://api.openai.com/v1/engines/davinci-codex/completions", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${sk}`,
+      "Authorization": `Bearer ${OPENAI_API_KEY}`
     },
-    body: JSON.stringify(data),
+    body: JSON.stringify({
+      prompt: prompt,
+      max_tokens: 500,
+      n: 1,
+      stop: ["###"]
+    })
   });
 
-  const responseJSON = await response.json();
-  const scenarioList = responseJSON.choices[0].text.trim().split("\n");
+  const data = await response.json();
+  const completion = data.choices[0].text.trim();
 
-  generateScenarioList(scenarioList);
-  submitButton.disabled = false;
-};
+  return completion;
+}
 
-document.addEventListener("DOMContentLoaded", () => {
-  const submitButton = document.querySelector("#submit-button");
-  submitButton.onclick = generateScenarios;
+function generateScenarioList(completion) {
+  const regex = /(?<=\n- ).*/g;
+  const matches = completion.match(regex);
+  return matches;
+}
 
-  const submitDocButton = document.querySelector("#submit-doc-button");
-  submitDocButton.onclick = analyzeDocumentation;
-});
+async function generateScenarios() {
+  const prompt = document.getElementById("prompt").value.trim();
+  const generateButton = document.getElementById("generateButton");
+  generateButton.disabled = true;
+
+  const resultsDiv = document.getElementById("results");
+  resultsDiv.innerHTML = "";
+
+  const loadingIndicator = document.createElement("p");
+  loadingIndicator.innerText = "Loading...";
+  resultsDiv.appendChild(loadingIndicator);
+
+  try {
+    const completion = await analyzeDocumentation(prompt);
+    const scenarios = generateScenarioList(completion);
+
+    if (scenarios.length > 0) {
+      const scenariosList = document.createElement("ul");
+      for (const scenario of scenarios) {
+        const scenarioItem = document.createElement("li");
+        scenarioItem.innerText = scenario;
+        scenariosList.appendChild(scenarioItem);
+      }
+      resultsDiv.innerHTML = "";
+      resultsDiv.appendChild(scenariosList);
+    } else {
+      const noResultsMessage = document.createElement("p");
+      noResultsMessage.innerText = "No scenarios found.";
+      resultsDiv.innerHTML = "";
+      resultsDiv.appendChild(noResultsMessage);
+    }
+  } catch (error) {
+    console.error(error);
+    const errorMessage = document.createElement("p");
+    errorMessage.innerText = "An error occurred while generating the scenarios.";
+    resultsDiv.innerHTML = "";
+    resultsDiv.appendChild(errorMessage);
+  }
+
+  generateButton.disabled = false;
+}
+
+if (OPENAI_API_KEY === undefined) {
+  const resultsDiv = document.getElementById("results");
+  resultsDiv.innerHTML = "OpenAI API key not set.";
+}
