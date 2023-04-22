@@ -1,68 +1,59 @@
-const generateScenarios = async () => {
-  const urlInput = document.getElementById("url-input");
-  const scenarioList = document.getElementById("scenario-list");
-  const generateButton = document.getElementById("generate-button");
+const form = document.getElementById("api-form");
+const resultContainer = document.getElementById("result-container");
 
-  const apiUrl = urlInput.value.trim();
-  if (!apiUrl) {
-    scenarioList.innerHTML = "Please enter an API documentation URL.";
-    return;
-  }
+form.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  resultContainer.innerHTML = "";
 
-  generateButton.disabled = true;
-  scenarioList.innerHTML = "Generating scenarios...";
+  const url = event.target.url.value;
 
   try {
-    const response = await fetch(apiUrl);
-    const apiSpec = await response.json();
-    const scenarios = generateScenarioList(apiSpec);
-    scenarioList.innerHTML = "";
-    scenarios.forEach((scenario) => {
-      const scenarioItem = document.createElement("div");
-      scenarioItem.className = "scenario";
-      scenarioItem.innerHTML = `<h3>${scenario.name}</h3><p>${scenario.description}</p><pre><code>${scenario.request}</code></pre>`;
-      scenarioList.appendChild(scenarioItem);
-    });
+    const response = await fetch(url);
+    const data = await response.json();
+
+    const scenarios = extractScenarios(data);
+    renderScenarios(scenarios);
   } catch (error) {
     console.error(error);
-    scenarioList.innerHTML = `Error generating scenarios: ${error.message}`;
-  } finally {
-    generateButton.disabled = false;
+    resultContainer.textContent = "An error occurred while fetching data from the API";
   }
-};
+});
 
-const generateScenarioList = (apiSpec) => {
+function extractScenarios(data) {
   const scenarios = [];
 
-  for (const path in apiSpec.paths) {
-    const methods = apiSpec.paths[path];
-    for (const method in methods) {
-      const operation = methods[method];
-      const name = operation.operationId || `${method.toUpperCase()} ${path}`;
-      const description = operation.description || "";
-      const request = generateRequestString(operation);
-      scenarios.push({ name, description, request });
+  for (const key in data) {
+    const value = data[key];
+    if (typeof value === "object" && value !== null) {
+      scenarios.push({ name: key, request: value });
     }
   }
 
   return scenarios;
-};
+}
 
-const generateRequestString = (operation) => {
-  const requestBody = operation.requestBody;
-  const parameters = operation.parameters || [];
-  let request = "";
-
-  if (requestBody) {
-    const requestBodyString = JSON.stringify(requestBody, null, 2);
-    request += `${operation.operationId}:\n\n${requestBodyString}\n\n`;
+function renderScenarios(scenarios) {
+  if (scenarios.length === 0) {
+    resultContainer.textContent = "No scenarios found in API response";
+    return;
   }
 
-  for (const parameter of parameters) {
-    request += `${parameter.name}: ${parameter.example}\n`;
-  }
+  const scenariosList = document.createElement("ul");
+  scenarios.forEach((scenario) => {
+    const listItem = document.createElement("li");
+    const link = document.createElement("a");
+    link.href = "#";
+    link.textContent = scenario.name;
+    link.addEventListener("click", (event) => {
+      event.preventDefault();
+      const result = document.createElement("pre");
+      resultContainer.innerHTML = "";
+      result.textContent = JSON.stringify(scenario.request, null, 2);
+      resultContainer.appendChild(result);
+    });
+    listItem.appendChild(link);
+    scenariosList.appendChild(listItem);
+  });
 
-  return request;
-};
-
-document.getElementById("generate-button").onclick = generateScenarios;
+  resultContainer.appendChild(scenariosList);
+}
