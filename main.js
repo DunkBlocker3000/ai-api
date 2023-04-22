@@ -1,23 +1,22 @@
-// Set up OpenAI API key
-const apiKey = process.env.OPENAI_API_KEY;
-
 function generateScenarios() {
   const docUrl = document.getElementById('docUrl').value;
   const endpointList = analyzeDocumentation(docUrl);
-  const scenarioList = generateScenarioList(endpointList);
-  const scenarioListElem = document.getElementById('scenarioList');
-  scenarioListElem.innerHTML = '';
-  for (const scenario of scenarioList) {
-    const scenarioElem = document.createElement('p');
-    scenarioElem.innerText = scenario;
-    scenarioListElem.appendChild(scenarioElem);
-  }
+  endpointList.then(function(result) {
+    const scenarioList = generateScenarioList(result);
+    const scenarioListElem = document.getElementById('scenarioList');
+    scenarioListElem.innerHTML = '';
+    for (const scenario of scenarioList) {
+      const scenarioElem = document.createElement('p');
+      scenarioElem.innerText = scenario;
+      scenarioListElem.appendChild(scenarioElem);
+    }
+  });
 }
 
 async function analyzeDocumentation(docUrl) {
   // Call OpenAI API to analyze documentation
   const prompt = `Please analyze the documentation at this URL: ${docUrl}`;
-  const result = await getOpenAIResponse(prompt, apiKey);
+  const result = await getOpenAIResponse(prompt);
   const endpointList = JSON.parse(result.choices[0].text);
   return endpointList;
 }
@@ -52,12 +51,12 @@ function generateScenario(endpoint) {
   return scenario;
 }
 
-async function getOpenAIResponse(prompt, apiKey) {
-  const requestOptions = {
+async function getOpenAIResponse(prompt) {
+  const response = await fetch('https://api.openai.com/v1/engines/davinci-codex/completions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
+      'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
     },
     body: JSON.stringify({
       'prompt': prompt,
@@ -66,8 +65,7 @@ async function getOpenAIResponse(prompt, apiKey) {
       'n': 1,
       'stop': '\n'
     })
-  };
-  const response = await fetch('https://api.openai.com/v1/engines/davinci-codex/completions', requestOptions);
+  });
   const data = await response.json();
   return data;
 }
