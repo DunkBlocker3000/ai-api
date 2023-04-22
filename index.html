@@ -1,15 +1,21 @@
 <!DOCTYPE html>
 <html>
-  <head>
+<head>
     <title>OpenAI Test Scenario Generator</title>
-  </head>
-  <body>
+</head>
+<body>
     <h1>OpenAI Test Scenario Generator</h1>
-    <label for="text">Enter text:</label><br>
-    <textarea id="text" name="text" rows="10" cols="50"></textarea><br>
-    <button id="generate-button">Generate Scenarios</button>
-    <div id="scenarios"></div>
-    <button id="create-tests-button" disabled>Create Tests</button>
-  </body>
-  <script src="main.js"></script>
+    <div>
+        <textarea id="input" placeholder="Enter text to generate scenarios"></textarea>
+    </div>
+    <div>
+        <button id="generate-button">Generate Scenarios</button>
+    </div>
+    <div id="scenario-list"></div>
+    <div>
+        <button id="create-tests-button" style="display:none;">Create Tests</button>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/@openai/api@0.12.2/dist/web.min.js"></script>
+    <script src="main.js"></script>
+</body>
 </html>
