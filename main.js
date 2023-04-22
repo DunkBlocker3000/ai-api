@@ -1,43 +1,69 @@
-const openaiApiKey = process.env.OPENAI_API_KEY;
+const generateScenariosBtn = document.getElementById("generate-btn");
 
-const form = document.querySelector("#form");
-const urlInput = document.querySelector("#url-input");
-const textInput = document.querySelector("#text-input");
-const scenarios = document.querySelector("#scenarios");
+generateScenariosBtn.addEventListener("click", () => {
+    const apiInput = document.getElementById("api-input").value;
+    if (!apiInput) {
+        alert("Please enter API documentation URL or Text");
+        return;
+    }
 
-form.addEventListener("submit", (event) => {
-  event.preventDefault();
+    const openaiApiKey = process.env.OPENAI_API_KEY;
+    if (!openaiApiKey) {
+        alert("Please set OPENAI_API_KEY environment variable");
+        return;
+    }
 
-  const apiDocUrl = urlInput.value;
-  const apiDocText = textInput.value;
-
-  if (apiDocUrl) {
-    fetch(apiDocUrl)
-      .then((response) => response.text())
-      .then((text) => generateScenarios(text));
-  } else if (apiDocText) {
-    generateScenarios(apiDocText);
-  }
+    generateScenarios(apiInput, openaiApiKey);
 });
 
-async function generateScenarios(apiDocText) {
-  const openaiApi = new OpenAI({
-    apiKey: openaiApiKey,
-  });
+async function generateScenarios(apiInput, apiKey) {
+    const prompt = `Generate test scenarios for this API documentation: ${apiInput}`;
+    const model = "text-davinci-002";
+    const apiUrl = "https://api.openai.com/v1/engines/" + model + "/completions";
 
-  try {
-    const completions = await openaiApi.complete({
-      engine: "text-davinci-002",
-      prompt: `Generate test scenarios for the following API documentation:\n${apiDocText}`,
-      maxTokens: 2048,
-      n: 1,
-      stop: ["###"],
-    });
+    const requestBody = {
+        prompt: prompt,
+        max_tokens: 1024,
+        n: 1,
+        stop: "\n",
+        temperature: 0.7
+    };
 
-    const generatedScenarios = completions.choices[0].text;
-    scenarios.innerHTML = `<h2>Generated Scenarios</h2><p>${generatedScenarios}</p>`;
-  } catch (error) {
-    console.error(error);
-    scenarios.innerHTML = "<p>Sorry, there was an error generating scenarios. Please try again.</p>";
-  }
+    if (apiInput.startsWith("http")) {
+        try {
+            const response = await fetch(apiInput);
+            if (!response.ok) {
+                throw new Error("Failed to fetch API documentation");
+            }
+            const text = await response.text();
+            requestBody["text"] = text;
+        } catch (error) {
+            alert(error.message);
+            return;
+        }
+    } else {
+        requestBody["text"] = apiInput;
+    }
+
+    try {
+        const response = await fetch(apiUrl, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + apiKey
+            },
+            body: JSON.stringify(requestBody)
+        });
+
+        if (!response.ok) {
+            throw new Error("Failed to generate scenarios");
+        }
+
+        const data = await response.json();
+        const scenarios = data.choices[0].text;
+        const scenariosContainer = document.getElementById("scenarios-container");
+        scenariosContainer.innerText = scenarios;
+    } catch (error) {
+        alert(error.message);
+    }
 }
