@@ -55,4 +55,3 @@ generateButton.addEventListener('click', async () => {
     scenarioList.appendChild(listItem);
   });
 });
-
