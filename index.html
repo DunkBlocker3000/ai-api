@@ -1,17 +1,23 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>API Scenario Generator</title>
+    <title>API Test Scenario Generator</title>
   </head>
   <body>
-    <h1>API Scenario Generator</h1>
-    <label for="apiUrl">API Documentation URL:</label>
-    <input type="text" id="apiUrl" /><br />
-    <button id="generateBtn" disabled>Generate Scenarios</button>
-    <div id="scenarios"></div>
-    <script src="./main.js"></script>
+    <h1>API Test Scenario Generator</h1>
+    <h3>Enter API Documentation URL:</h3>
+    <input type="text" id="urlInput" />
+    <button onclick="generateScenariosFromUrl()">Generate Scenarios</button>
+    <h3>OR paste API documentation below:</h3>
+    <textarea id="apiTextArea"></textarea>
+    <button onclick="generateScenariosFromText()">Generate Scenarios</button>
+    <hr />
+    <h2>Generated Scenarios:</h2>
+    <ul id="scenariosList"></ul>
+
+    <script src="main.js"></script>
   </body>
 </html>
