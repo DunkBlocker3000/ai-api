@@ -1,20 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>API Explorer</title>
-  </head>
-  <body>
-    <h1>API Explorer</h1>
-    <form id="api-form">
-      <label for="url-input">API URL:</label>
-      <input type="text" id="url-input" name="url" />
-      <button type="submit">Submit</button>
-    </form>
-    <hr />
-    <div id="result-container"></div>
-    <script src="dist/main.js"></script>
-  </body>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>API Scenario Generator</title>
+	<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+	<h1>API Scenario Generator</h1>
+	<label for="apiUrl">API Documentation URL:</label>
+	<input type="text" id="apiUrl">
+	<button onclick="generateScenarios()">Generate Scenarios</button>
+	<div id="results"></div>
+	<script src="main.js"></script>
+</body>
 </html>
