@@ -1,15 +1,15 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="UTF-8">
-    <title>API Scenario Generator</title>
-    <script src="main.js"></script>
-  </head>
-  <body>
-    <h1>API Scenario Generator</h1>
-    <label for="docUrl">Enter the URL to your API documentation:</label>
-    <input type="text" id="docUrl" name="docUrl">
-    <button id="generateBtn" onclick="generateScenarios()">Generate Scenarios</button>
-    <div id="scenarioList"></div>
-  </body>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Scenario Generator</title>
+</head>
+<body>
+  <h1>Scenario Generator</h1>
+  <p>Enter your prompt below:</p>
+  <textarea id="prompt" rows="5" cols="50"></textarea>
+  <button id="generateButton">Generate Scenarios</button>
+  <div id="results"></div>
+  <script src="main.js"></script>
+</body>
 </html>
