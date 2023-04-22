@@ -1,25 +1,56 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const input = document.getElementById("input");
-  const output = document.getElementById("output");
-  const generateButton = document.getElementById("generate");
+const input = document.getElementById('input');
+const generateButton = document.getElementById('generate-button');
+const scenariosList = document.getElementById('scenarios');
 
-  generateButton.addEventListener("click", async () => {
-    const text = input.value.trim();
-    if (text === "") {
-      output.innerHTML = "Please enter some API documentation!";
+generateButton.addEventListener('click', () => {
+  const inputText = input.value.trim();
+
+  if (inputText.length === 0) {
+    alert('Please enter API documentation URL or JSON.');
+    return;
+  }
+
+  let apiUrl = '';
+  if (inputText.startsWith('http')) {
+    apiUrl = inputText;
+  } else {
+    try {
+      const inputJson = JSON.parse(inputText);
+      apiUrl = inputJson.host + inputJson.basePath;
+    } catch {
+      alert('Invalid input format. Please enter a valid API documentation URL or JSON.');
       return;
     }
+  }
 
-    const prompt = `Generate test scenarios based on this API documentation:\n\n${text}\n\n---\n\nScenario 1:`;
-    const completions = await openai.complete({
-      engine: "text-davinci-002",
-      prompt,
-      maxTokens: 1024,
-      n: 1,
-      stop: ["Scenario"],
+  const apiKey = process.env.OPENAI_API_KEY;
+  const openai = new OpenAI(apiKey);
+
+  const prompt = `Given the API documentation located at ${apiUrl}, write test scenarios for the following endpoints and methods:\n`;
+
+  const completionsOptions = {
+    maxTokens: 1024,
+    n: 1,
+    stop: ['\n\n'],
+    temperature: 0.5,
+  };
+
+  scenariosList.innerHTML = '<li>Generating scenarios...</li>';
+
+  openai.complete(prompt, completionsOptions)
+    .then(response => {
+      const { choices } = response.data;
+      const scenarios = choices[0].text.trim().split('\n');
+
+      scenariosList.innerHTML = '';
+      scenarios.forEach(scenario => {
+        const scenarioItem = document.createElement('li');
+        scenarioItem.textContent = scenario;
+        scenariosList.appendChild(scenarioItem);
+      });
+    })
+    .catch(error => {
+      scenariosList.innerHTML = '<li>An error occurred while generating scenarios. Please try again later.</li>';
+      console.error(error);
     });
-
-    const scenario = completions.choices[0].text.trim();
-    output.innerHTML = `Generated test scenario:<br/><br/>${scenario}`;
-  });
 });
