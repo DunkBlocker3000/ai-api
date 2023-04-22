@@ -1,15 +1,25 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Scenario Generator</title>
-</head>
-<body>
-  <h1>Scenario Generator</h1>
-  <p>Enter your prompt below:</p>
-  <textarea id="prompt" rows="5" cols="50"></textarea>
-  <button id="generateButton">Generate Scenarios</button>
-  <div id="results"></div>
-  <script src="main.js"></script>
-</body>
+<html>
+  <head>
+    <title>API Scenario Generator</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="main.js"></script>
+  </head>
+  <body>
+    <div>
+      <h1>API Scenario Generator</h1>
+      <p>
+        Paste the URL to an API documentation page below to generate test
+        scenarios:
+      </p>
+      <input type="text" id="apiUrl" placeholder="API documentation URL" />
+      <button onclick="generateScenarios()">Generate Scenarios</button>
+    </div>
+    <hr />
+    <div>
+      <h2>Generated Scenarios:</h2>
+      <div id="scenarioList"></div>
+    </div>
+  </body>
 </html>
