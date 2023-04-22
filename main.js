@@ -1,49 +1,68 @@
-const urlInput = document.getElementById("url");
-const generateButton = document.querySelector("button[type=submit]");
-const scenarioDiv = document.getElementById("scenarios");
+const generateScenarios = async () => {
+  const urlInput = document.getElementById("url-input");
+  const scenarioList = document.getElementById("scenario-list");
+  const generateButton = document.getElementById("generate-button");
 
-async function generateScenarios(event) {
-  event.preventDefault();
-  const url = urlInput.value.trim();
-  if (!url) {
-    alert("Please enter a valid URL.");
+  const apiUrl = urlInput.value.trim();
+  if (!apiUrl) {
+    scenarioList.innerHTML = "Please enter an API documentation URL.";
     return;
   }
+
   generateButton.disabled = true;
-  generateButton.textContent = "Generating...";
+  scenarioList.innerHTML = "Generating scenarios...";
+
   try {
-    const response = await fetch(url);
-    const text = await response.text();
-    const scenarios = generateScenarioList(text);
-    scenarioDiv.innerHTML = "";
-    for (const scenario of scenarios) {
-      const pre = document.createElement("pre");
-      pre.textContent = scenario;
-      scenarioDiv.appendChild(pre);
-    }
+    const response = await fetch(apiUrl);
+    const apiSpec = await response.json();
+    const scenarios = generateScenarioList(apiSpec);
+    scenarioList.innerHTML = "";
+    scenarios.forEach((scenario) => {
+      const scenarioItem = document.createElement("div");
+      scenarioItem.className = "scenario";
+      scenarioItem.innerHTML = `<h3>${scenario.name}</h3><p>${scenario.description}</p><pre><code>${scenario.request}</code></pre>`;
+      scenarioList.appendChild(scenarioItem);
+    });
   } catch (error) {
-    alert(`Error: ${error.message}`);
+    console.error(error);
+    scenarioList.innerHTML = `Error generating scenarios: ${error.message}`;
   } finally {
     generateButton.disabled = false;
-    generateButton.textContent = "Generate Scenarios";
   }
-}
+};
 
-function generateScenarioList(text) {
-  const urls = new Set();
-  const scenarioSet = new Set();
-  const baseUrlRegex = /^https?:\/\/[^/]+/;
-  const urlRegex = /\bhttps?:\/\/\S+/g;
-  let match;
-  while ((match = urlRegex.exec(text))) {
-    urls.add(match[0]);
-  }
-  for (const url of urls) {
-    const baseUrl = baseUrlRegex.exec(url)[0];
-    scenarioSet.add(`Given a valid API key for ${baseUrl}, when I send a GET request to ${url}, then I expect to receive a response with status code 200.`);
-    scenarioSet.add(`Given an invalid API key for ${baseUrl}, when I send a GET request to ${url}, then I expect to receive a response with status code 401.`);
-  }
-  return Array.from(scenarioSet);
-}
+const generateScenarioList = (apiSpec) => {
+  const scenarios = [];
 
-generateButton.addEventListener("click", generateScenarios);
+  for (const path in apiSpec.paths) {
+    const methods = apiSpec.paths[path];
+    for (const method in methods) {
+      const operation = methods[method];
+      const name = operation.operationId || `${method.toUpperCase()} ${path}`;
+      const description = operation.description || "";
+      const request = generateRequestString(operation);
+      scenarios.push({ name, description, request });
+    }
+  }
+
+  return scenarios;
+};
+
+const generateRequestString = (operation) => {
+  const requestBody = operation.requestBody;
+  const parameters = operation.parameters || [];
+  let request = "";
+
+  if (requestBody) {
+    const requestBodyString = JSON.stringify(requestBody, null, 2);
+    request += `${operation.operationId}:\n\n${requestBodyString}\n\n`;
+  }
+
+  for (const parameter of parameters) {
+    request += `${parameter.name}: ${parameter.example}\n`;
+  }
+
+  return request;
+};
+
+document.getElementById("generate-button").onclick = generateScenarios;
