@@ -1,69 +1,58 @@
-const generateButton = document.getElementById("generate-button");
-const createTestsButton = document.getElementById("create-tests-button");
-const scenariosDiv = document.getElementById("scenarios");
+const generateButton = document.querySelector('#generate-button');
+const textArea = document.querySelector('#text-area');
+const scenarioList = document.querySelector('#scenario-list');
 
-generateButton.addEventListener("click", async () => {
-  scenariosDiv.innerHTML = "";
-  createTestsButton.disabled = true;
-
-  const text = document.getElementById("text").value;
-  const response = await fetch("/generate-scenarios", {
-    method: "POST",
-    body: JSON.stringify({ text }),
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to generate scenarios: ${response.status} ${response.statusText}`);
-  }
-
-  const { scenarios } = await response.json();
-
-  scenarios.forEach((scenario) => {
-    const radio = document.createElement("input");
-    radio.type = "radio";
-    radio.name = "scenario";
-    radio.value = scenario;
-
-    const label = document.createElement("label");
-    label.textContent = scenario;
-
-    const br = document.createElement("br");
-
-    scenariosDiv.appendChild(radio);
-    scenariosDiv.appendChild(label);
-    scenariosDiv.appendChild(br);
-  });
-
-  createTestsButton.disabled = false;
-});
-
-createTestsButton.addEventListener("click", async () => {
-  const selectedScenario = document.querySelector('input[name="scenario"]:checked');
-
-  if (!selectedScenario) {
-    alert("Please select a scenario.");
+generateButton.addEventListener('click', async () => {
+  const text = textArea.value;
+  if (text.trim() === '') {
+    alert('Please enter some text');
     return;
   }
 
-  const response = await fetch("/create-tests", {
-    method: "POST",
-    body: JSON.stringify({ scenario: selectedScenario.value }),
+  const response = await fetch(`https://api.openai.com/v1/engines/davinci-codex/completions`, {
+    method: 'POST',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
     },
+    body: JSON.stringify({
+      prompt: `Provide a comprehensive list of scenarios to test the software described in this text:\n\n${text}`,
+      max_tokens: 60,
+      n: 1,
+      stop: ['\n\n']
+    })
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to create tests: ${response.status} ${response.statusText}`);
+    throw new Error(`Failed to generate scenarios: ${response.status}`);
   }
 
-  const { downloadUrl, type } = await response.json();
+  const data = await response.json();
 
-  const link = document.createElement("a");
-  link.href = downloadUrl;
-  link.download = `tests.${type}`;
-  link.click();
+  const scenarios = data.choices[0].text.trim().split('\n');
+
+  if (scenarios.length === 0) {
+    alert('No scenarios were generated');
+    return;
+  }
+
+  scenarioList.innerHTML = '';
+  scenarios.forEach((scenario, index) => {
+    const radioInput = document.createElement('input');
+    radioInput.type = 'radio';
+    radioInput.name = 'scenario';
+    radioInput.id = `scenario-${index}`;
+    radioInput.value = scenario;
+
+    const radioLabel = document.createElement('label');
+    radioLabel.setAttribute('for', `scenario-${index}`);
+    radioLabel.innerText = scenario;
+
+    const listItem = document.createElement('li');
+    listItem.appendChild(radioInput);
+    listItem.appendChild(radioLabel);
+
+    scenarioList.appendChild(listItem);
+  });
 });
+
