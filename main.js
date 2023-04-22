@@ -1,66 +1,36 @@
-const generateBtn = document.getElementById("generate-btn");
-generateBtn.addEventListener("click", generateScenarios);
-
-function generateScenarios() {
-  const inputType = document.getElementById("input-type").value;
-  const input = document.getElementById("input").value;
-  const prompt = `Generate test scenarios for this API documentation:\n\n${input}`;
-
+document.addEventListener("DOMContentLoaded", function () {
   const openaiApiKey = process.env.OPENAI_API_KEY;
-  const openaiApiEndpoint = "https://api.openai.com/v1/engines/davinci-codex/completions";
+  const generateBtn = document.getElementById("generate-btn");
+  const inputBox = document.getElementById("input");
+  const outputDiv = document.getElementById("output");
 
-  const headers = {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${openaiApiKey}`,
-  };
+  generateBtn.addEventListener("click", function () {
+    const inputText = inputBox.value.trim();
 
-  const data = {
-    prompt,
-    max_tokens: 200,
-    temperature: 0.5,
-    n: 1,
-    stop: "\n\n",
-  };
+    if (inputText !== "") {
+      generateScenarios(inputText, openaiApiKey);
+    }
+  });
 
-  if (inputType === "url") {
-    fetch(input)
-      .then((response) => response.text())
-      .then((text) => {
-        data.prompt += `\n\n${text}`;
-        generateScenariosHelper(data, headers, openaiApiEndpoint);
-      })
-      .catch((error) => {
-        console.error(`Error fetching URL: ${input}`);
-        console.error(error);
-      });
-  } else if (inputType === "text") {
-    generateScenariosHelper(data, headers, openaiApiEndpoint);
-  } else {
-    console.error(`Invalid input type: ${inputType}`);
-  }
-}
+  async function generateScenarios(inputText, apiKey) {
+    try {
+      const completions = await openai.complete({
+        engine: "text-davinci-002",
+        prompt:
+          "Generate possible scenarios based on the following text:\n\n" +
+          inputText +
+          "\n\n1.",
+        maxTokens: 60,
+        n: 5,
+        stop: ["2."],
+      }, apiKey);
 
-function generateScenariosHelper(data, headers, openaiApiEndpoint) {
-  fetch(openaiApiEndpoint, {
-    method: "POST",
-    headers,
-    body: JSON.stringify(data),
-  })
-    .then((response) => response.json())
-    .then((data) => {
-      const outputElement = document.getElementById("output");
-      outputElement.innerHTML = "";
+      const scenarios = completions.choices.map((choice) => choice.text.trim());
 
-      data.choices[0].text.split("\n").forEach((scenario) => {
-        if (scenario) {
-          const scenarioElement = document.createElement("p");
-          scenarioElement.innerText = scenario;
-          outputElement.appendChild(scenarioElement);
-        }
-      });
-    })
-    .catch((error) => {
-      console.error("Error generating scenarios:");
+      outputDiv.innerHTML = scenarios.map((scenario, i) => `${i + 1}. ${scenario}<br />`).join("");
+    } catch (error) {
       console.error(error);
-    });
-}
+      outputDiv.innerHTML = "Error generating scenarios.";
+    }
+  }
+});
