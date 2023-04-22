@@ -1,17 +1,23 @@
 <!DOCTYPE html>
-<html>
-  <head>
+<html lang="en">
+<head>
     <meta charset="UTF-8">
     <title>API Scenario Generator</title>
-  </head>
-  <body>
-    <h1>API Scenario Generator</h1>
-    <form>
-      <label for="doc-url">API Documentation URL:</label>
-      <input type="text" id="doc-url" name="doc-url"><br><br>
-      <input type="submit" value="Generate Scenarios">
+</head>
+<body>
+    <form id="apiForm">
+        <label for="apiUrl">API documentation URL:</label>
+        <input type="text" id="apiUrl" name="apiUrl" required>
+        <br>
+        <button type="submit">Generate Scenarios</button>
     </form>
-    <div id="scenarios"></div>
-    <script src="script.js"></script>
-  </body>
+    <div id="scenarioList"></div>
+    <form id="selectedScenarios">
+        <label for="selected">Selected Scenarios:</label>
+        <select id="selected" name="selected" multiple></select>
+        <br>
+        <button type="submit">Generate Requests</button>
+    </form>
+    <script src="main.js"></script>
+</body>
 </html>
