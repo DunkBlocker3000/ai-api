@@ -1,63 +1,78 @@
-const openaiApiKey = process.env.OPENAI_API_KEY; // Set your API key as an environment variable
+const api = window.openai;
+const generateScenariosBtn = document.getElementById('generate-scenarios-btn');
+const createTestsBtn = document.getElementById('create-tests-btn');
 
-const input = document.getElementById("input");
-const generateBtn = document.getElementById("generate-btn");
-const createTestsBtn = document.getElementById("create-tests-btn");
-const scenariosContainer = document.getElementById("scenarios-container");
+generateScenariosBtn.addEventListener('click', async () => {
+  const inputText = document.getElementById('input-text').value.trim();
+  if (!inputText) {
+    alert('Please enter some text');
+    return;
+  }
 
-generateBtn.addEventListener("click", async () => {
+  generateScenariosBtn.disabled = true;
+  generateScenariosBtn.textContent = 'Generating...';
+
   const prompt = "Provide a comprehensive list of scenarios to test the software described in this text.";
-  const model = "text-davinci-002";
-  const completions = await openai.complete({
-    engine: "davinci-codex",
-    prompt,
-    maxTokens: 1024,
-    n: 1,
+  const completions = await api.Completion.create({
+    engine: 'davinci',
+    prompt: prompt,
+    maxTokens: 60,
+    n: 3,
+    stop: '\n\n',
     temperature: 0.5,
-    apiKey: openaiApiKey,
-    model
+    promptOverrides: {
+      prompt: prompt + '\n' + inputText
+    }
   });
+  
+  const scenarioList = document.createElement('ul');
+  completions.choices.forEach((choice, index) => {
+    const scenario = document.createElement('li');
+    const radio = document.createElement('input');
+    radio.type = 'radio';
+    radio.name = 'scenario';
+    radio.value = index;
+    if (index === 0) {
+      radio.checked = true;
+    }
+    const label = document.createElement('label');
+    label.textContent = choice.text.trim();
+    label.htmlFor = `scenario-${index}`;
 
-  const { data } = completions.choices[0];
-  const scenarios = data.text.trim().split("\n").map((s) => s.trim());
-
-  let html = "";
-  for (let i = 0; i < scenarios.length; i++) {
-    html += `<label><input type="radio" name="scenario" value="${i}"> ${scenarios[i]}</label><br>`;
-  }
-  scenariosContainer.innerHTML = html;
-
-  createTestsBtn.style.display = "";
+    scenario.appendChild(radio);
+    scenario.appendChild(label);
+    scenarioList.appendChild(scenario);
+  });
+  
+  createTestsBtn.style.display = 'block';
+  document.getElementById('scenarios').innerHTML = '';
+  document.getElementById('scenarios').appendChild(scenarioList);
+  generateScenariosBtn.disabled = false;
+  generateScenariosBtn.textContent = 'Generate Scenarios';
 });
 
-createTestsBtn.addEventListener("click", () => {
-  const scenarioIndex = document.querySelector('input[name="scenario"]:checked').value;
+createTestsBtn.addEventListener('click', async () => {
+  const selectedRadio = document.querySelector('input[name="scenario"]:checked');
+  const selectedScenario = selectedRadio.value;
+  const scenarioText = completions.choices[selectedScenario].text.trim();
+  
+  createTestsBtn.disabled = true;
+  createTestsBtn.textContent = 'Creating Tests...';
 
-  const hasApi = input.value.toLowerCase().includes("api");
-  if (hasApi) {
-    const scenario = scenariosContainer.querySelectorAll("input")[scenarioIndex].nextSibling.textContent.trim();
-
-    // Create API file for scenario and output in zip file
-    // TODO: Implement logic for creating API file and zip file
+  const filename = 'scenarios.zip';
+  const contentType = 'application/zip';
+  
+  const { generateTests, hasAPI } = generateTest(scenarioText);
+  
+  if (hasAPI) {
+    const zip = new JSZip();
+    const apiFolder = zip.folder('API');
+    generateTests.forEach((test, index) => {
+      apiFolder.file(`api-${index}.json`, JSON.stringify(test, null, 2));
+    });
+    zip.generateAsync({ type: 'blob' }).then((content) => {
+      saveAs(content, filename);
+    });
   } else {
-    const scenarios = scenariosContainer.querySelectorAll("input").length;
-    let csv = "Scenario,Steps to Execute,Expected Outcome\n";
-    for (let i = 0; i < scenarios; i++) {
-      const scenario = scenariosContainer.querySelectorAll("input")[i].nextSibling.textContent.trim();
-      csv += `"${scenario}","",""\n`;
-    }
-
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    if (link.download !== undefined) { // feature detection
-      // Browsers that support HTML5 download attribute
-      const url = URL.createObjectURL(blob);
-      link.setAttribute("href", url);
-      link.setAttribute("download", "test-cases.csv");
-      link.style.visibility = "hidden";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-  }
-});
+    const csvData = generateCSV(generateTests);
+    const blob = new Blob([csvData],
