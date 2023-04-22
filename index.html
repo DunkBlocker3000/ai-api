@@ -1,19 +1,39 @@
 <!DOCTYPE html>
-<html>
-<head>
-	<title>API Test Scenarios Generator</title>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<script src="main.js"></script>
-</head>
-<body>
-	<h1>API Test Scenarios Generator</h1>
-	<p>Enter API documentation URL or paste API documentation below:</p>
-	<form>
-		<input type="url" id="api-url" placeholder="API Documentation URL" required>
-		<textarea id="api-text" placeholder="Paste API documentation"></textarea>
-		<button type="submit" onclick="generateScenarios(event)">Generate Test Scenarios</button>
-	</form>
-	<div id="scenarios"></div>
-</body>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>API Scenario Generator</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+
+  <body>
+    <header>
+      <h1>API Scenario Generator</h1>
+    </header>
+
+    <main>
+      <form id="form">
+        <label for="url-input">Enter API documentation URL:</label>
+        <input type="url" id="url-input" name="url-input" placeholder="https://www.example.com/api/docs/" />
+
+        <p>OR</p>
+
+        <label for="text-input">Paste API documentation:</label>
+        <textarea id="text-input" name="text-input" rows="10" placeholder="Paste API documentation here"></textarea>
+
+        <button type="submit">Generate Scenarios</button>
+      </form>
+
+      <section id="scenarios">
+        <!-- generated scenarios will appear here -->
+      </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@openai/api/dist/browser.js"></script>
+    <script src="in.js"></script>
+    <script src="main.js"></script>
+  </body>
 </html>
