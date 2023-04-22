@@ -1,21 +1,18 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
+<html>
+  <head>
     <meta charset="UTF-8">
     <title>API Scenario Generator</title>
-</head>
-<body>
+  </head>
+  <body>
     <h1>API Scenario Generator</h1>
     <form>
-        <label for="api-url">API documentation URL:</label>
-        <input type="text" id="api-url" name="api-url">
-        <button id="generate-scenarios" type="button">Generate Scenarios</button>
+      <label for="apiUrl">API Documentation URL:</label>
+      <input type="text" id="apiUrl" name="apiUrl"><br><br>
+      <button type="button" id="generateBtn">Generate Scenarios</button>
     </form>
-
-    <div id="results"></div>
-
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="./in.js"></script>
-    <script src="./main.js"></script>
-</body>
+    <p id="loadingMsg"></p>
+    <ul id="scenarios"></ul>
+    <script src="main.js"></script>
+  </body>
 </html>
