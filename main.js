@@ -1,17 +1,36 @@
-const openai = new OpenAI(api_key);
+const inputForm = document.getElementById("input-form");
+inputForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const input = document.getElementById("input").value.trim();
 
-let generateScenarios = async (input) => {
-    const completions = await openai.complete({
-        engine: 'text-davinci-002',
-        prompt: `${input}\n\nExample scenarios that could happen as a result of the above text:`,
-        maxTokens: 1024,
-        n: 1,
-        stop: '\n\n',
-        temperature: 0.7,
-    });
-    const scenarioList = document.getElementById('scenario-list');
-    scenarioList.innerHTML = '';
-    const scenarios = completions.choices[0].text.trim().split('\n');
-    scenarios.forEach((scenario) => {
-        const scenarioItem = document.createElement('li');
-        scenarioItem
+  if (!input) {
+    alert("Please enter text or a URL to generate scenarios.");
+    return;
+  }
+
+  const engine = "text-davinci-002";
+  const prompt = `Please generate 5 scenarios based on the following input:\n\n${input}`;
+
+  const apiKey = process.env.OPENAI_API_KEY; // Remove this line if using browser-compatible API key
+  const openai = require("openai"); // Remove this line if using browser-compatible API
+  openai.apiKey = apiKey; // Remove this line if using browser-compatible API
+
+  openai.complete({
+    engine,
+    prompt,
+    maxTokens: 60,
+    n: 5,
+    stop: "\n",
+  }).then((response) => {
+    const { choices } = response.data;
+    const output = document.getElementById("output");
+    output.innerHTML = "";
+    const ul = document.createElement("ul");
+    for (const choice of choices) {
+      const li = document.createElement("li");
+      li.textContent = choice.text.trim();
+      ul.appendChild(li);
+    }
+    output.appendChild(ul);
+  }).catch((err) => console.error(err));
+});
