@@ -1,75 +1,49 @@
-let apiKey;
+const urlInput = document.getElementById("url");
+const generateButton = document.querySelector("button[type=submit]");
+const scenarioDiv = document.getElementById("scenarios");
 
-function setApiKey() {
-  apiKey = process.env.OPENAI_API_KEY;
-}
-
-async function analyzeDocumentation() {
-  const response = await fetch(apiUrl);
-  const text = await response.text();
-  const parser = new DOMParser();
-  const htmlDocument = parser.parseFromString(text, "text/html");
-  const endpointList = htmlDocument.querySelectorAll("section[id^=endpoints]");
-  if (!endpointList.length) {
-    throw new Error("Could not find any API endpoints on the page");
-  }
-  const scenarios = [];
-  endpointList.forEach((endpoint) => {
-    const title = endpoint.querySelector("h1, h2, h3, h4, h5, h6");
-    if (!title) {
-      return;
-    }
-    const titleText = title.innerText.trim();
-    if (!titleText) {
-      return;
-    }
-    const methodList = endpoint.querySelectorAll("table>tbody>tr");
-    if (!methodList.length) {
-      return;
-    }
-    methodList.forEach((method) => {
-      const methodCells = method.querySelectorAll("td");
-      if (!methodCells.length) {
-        return;
-      }
-      const scenario = {
-        title: `${titleText} - ${methodCells[0].innerText.trim()}`,
-        steps: [],
-      };
-      methodCells[1]
-        .querySelectorAll("code")
-        .forEach((param) => scenario.steps.push(`Set ${param.innerText.trim()} to [value].`));
-      methodCells[2]
-        .querySelectorAll("code")
-        .forEach((param) => scenario.steps.push(`Set ${param.innerText.trim()} to [value].`));
-      scenarios.push(scenario);
-    });
-  });
-  return scenarios;
-}
-
-function generateScenarioList(scenarios) {
-  const scenarioList = document.getElementById("scenarioList");
-  scenarioList.innerHTML = "";
-  if (!scenarios.length) {
-    scenarioList.innerText = "No scenarios were found in the documentation.";
+async function generateScenarios(event) {
+  event.preventDefault();
+  const url = urlInput.value.trim();
+  if (!url) {
+    alert("Please enter a valid URL.");
     return;
   }
-  scenarios.forEach((scenario, index) => {
-    const scenarioDiv = document.createElement("div");
-    const scenarioTitle = document.createElement("h3");
-    scenarioTitle.innerText = `${index + 1}. ${scenario.title}`;
-    scenarioDiv.appendChild(scenarioTitle);
-    const stepList = document.createElement("ul");
-    scenario.steps.forEach((step) => {
-      const stepItem = document.createElement("li");
-      stepItem.innerText = step.replace("[value]", "______");
-      stepList.appendChild(stepItem);
-    });
-    scenarioDiv.appendChild(stepList);
-    scenarioList.appendChild(scenarioDiv);
-  });
+  generateButton.disabled = true;
+  generateButton.textContent = "Generating...";
+  try {
+    const response = await fetch(url);
+    const text = await response.text();
+    const scenarios = generateScenarioList(text);
+    scenarioDiv.innerHTML = "";
+    for (const scenario of scenarios) {
+      const pre = document.createElement("pre");
+      pre.textContent = scenario;
+      scenarioDiv.appendChild(pre);
+    }
+  } catch (error) {
+    alert(`Error: ${error.message}`);
+  } finally {
+    generateButton.disabled = false;
+    generateButton.textContent = "Generate Scenarios";
+  }
 }
 
-async function generateScenarios() {
-  const apiUrl = document.getElementById("apiUrl").value
+function generateScenarioList(text) {
+  const urls = new Set();
+  const scenarioSet = new Set();
+  const baseUrlRegex = /^https?:\/\/[^/]+/;
+  const urlRegex = /\bhttps?:\/\/\S+/g;
+  let match;
+  while ((match = urlRegex.exec(text))) {
+    urls.add(match[0]);
+  }
+  for (const url of urls) {
+    const baseUrl = baseUrlRegex.exec(url)[0];
+    scenarioSet.add(`Given a valid API key for ${baseUrl}, when I send a GET request to ${url}, then I expect to receive a response with status code 200.`);
+    scenarioSet.add(`Given an invalid API key for ${baseUrl}, when I send a GET request to ${url}, then I expect to receive a response with status code 401.`);
+  }
+  return Array.from(scenarioSet);
+}
+
+generateButton.addEventListener("click", generateScenarios);
