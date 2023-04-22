@@ -1,29 +1,17 @@
-document.addEventListener('DOMContentLoaded', function() {
-  const openaiApiKey = process.env.OPENAI_API_KEY;
-  const outputContainer = document.getElementById('output-container');
-  const generateButton = document.getElementById('generate-button');
-  
-  generateButton.addEventListener('click', async () => {
-    const inputText = document.getElementById('input-text').value;
-    const inputUrl = document.getElementById('input-url').value;
-    const prompt = `Scenario: ${inputText}\nSource: ${inputUrl}`;
-    
-    try {
-      const completions = await openai.complete({
-        engine: 'davinci',
-        prompt: prompt,
-        maxTokens: 60,
-        n: 1,
-        stop: '\n',
-        temperature: 0.5,
-      });
+const openai = new OpenAI(api_key);
 
-      const scenarios = completions.choices.map(choice => choice.text.trim());
-      const outputHtml = scenarios.map(scenario => `<p>${scenario}</p>`).join('');
-      outputContainer.innerHTML = outputHtml;
-    } catch (err) {
-      console.log(err);
-      outputContainer.innerHTML = '<p>Error generating scenarios. Please try again.</p>';
-    }
-  });
-});
+let generateScenarios = async (input) => {
+    const completions = await openai.complete({
+        engine: 'text-davinci-002',
+        prompt: `${input}\n\nExample scenarios that could happen as a result of the above text:`,
+        maxTokens: 1024,
+        n: 1,
+        stop: '\n\n',
+        temperature: 0.7,
+    });
+    const scenarioList = document.getElementById('scenario-list');
+    scenarioList.innerHTML = '';
+    const scenarios = completions.choices[0].text.trim().split('\n');
+    scenarios.forEach((scenario) => {
+        const scenarioItem = document.createElement('li');
+        scenarioItem
