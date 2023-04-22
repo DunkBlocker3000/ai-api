@@ -1,69 +1,65 @@
-const generateScenariosBtn = document.getElementById("generate-btn");
+const openaiApiKey = process.env.OPENAI_API_KEY;
 
-generateScenariosBtn.addEventListener("click", () => {
-    const apiInput = document.getElementById("api-input").value;
-    if (!apiInput) {
-        alert("Please enter API documentation URL or Text");
-        return;
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.querySelector('form');
+  const scenariosDiv = document.querySelector('#scenarios');
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    scenariosDiv.innerHTML = 'Loading...';
+
+    const url = document.querySelector('#url').value;
+    const text = document.querySelector('#text').value;
+
+    if (!url && !text) {
+      scenariosDiv.innerHTML = 'Please enter a URL or text.';
+      return;
     }
 
-    const openaiApiKey = process.env.OPENAI_API_KEY;
-    if (!openaiApiKey) {
-        alert("Please set OPENAI_API_KEY environment variable");
-        return;
-    }
+    const content = url ? await fetchUrl(url) : text;
+    const scenarios = await generateScenarios(content);
 
-    generateScenarios(apiInput, openaiApiKey);
+    scenariosDiv.innerHTML = '';
+    scenarios.forEach((scenario, i) => {
+      const scenarioDiv = document.createElement('div');
+      const header = document.createElement('h2');
+      const stepsList = document.createElement('ol');
+      header.innerText = `Scenario ${i + 1}`;
+      scenario.steps.forEach((step) => {
+        const stepItem = document.createElement('li');
+        stepItem.innerText = step;
+        stepsList.appendChild(stepItem);
+      });
+      scenarioDiv.appendChild(header);
+      scenarioDiv.appendChild(stepsList);
+      scenariosDiv.appendChild(scenarioDiv);
+    });
+  });
 });
 
-async function generateScenarios(apiInput, apiKey) {
-    const prompt = `Generate test scenarios for this API documentation: ${apiInput}`;
-    const model = "text-davinci-002";
-    const apiUrl = "https://api.openai.com/v1/engines/" + model + "/completions";
+async function fetchUrl(url) {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch ${url}: ${response.status} ${response.statusText}`);
+  }
+  const text = await response.text();
+  return text;
+}
 
-    const requestBody = {
-        prompt: prompt,
-        max_tokens: 1024,
-        n: 1,
-        stop: "\n",
-        temperature: 0.7
-    };
-
-    if (apiInput.startsWith("http")) {
-        try {
-            const response = await fetch(apiInput);
-            if (!response.ok) {
-                throw new Error("Failed to fetch API documentation");
-            }
-            const text = await response.text();
-            requestBody["text"] = text;
-        } catch (error) {
-            alert(error.message);
-            return;
-        }
-    } else {
-        requestBody["text"] = apiInput;
-    }
-
-    try {
-        const response = await fetch(apiUrl, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": "Bearer " + apiKey
-            },
-            body: JSON.stringify(requestBody)
-        });
-
-        if (!response.ok) {
-            throw new Error("Failed to generate scenarios");
-        }
-
-        const data = await response.json();
-        const scenarios = data.choices[0].text;
-        const scenariosContainer = document.getElementById("scenarios-container");
-        scenariosContainer.innerText = scenarios;
-    } catch (error) {
-        alert(error.message);
-    }
+async function generateScenarios(text) {
+  const openai = new OpenAI(openaiApiKey);
+  const prompt = `Generate test scenarios based on the following:\n${text}\n\nScenario 1:`;
+  const completions = await openai.complete({
+    engine: 'text-davinci-002',
+    prompt,
+    maxTokens: 2048,
+    n: 1,
+    stop: 'Scenario'
+  });
+  const scenarios = [];
+  completions.choices.forEach((choice) => {
+    const text = choice.text.trim();
+    const steps = text.split('\n').slice(1);
+    scenarios.push({ steps });
+  });
+  return scenarios;
 }
