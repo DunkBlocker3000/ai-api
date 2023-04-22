@@ -1,5 +1,5 @@
 // Set up OpenAI API key
-const apiKey = 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;
+const apiKey = process.env.OPENAI_API_KEY;
 
 function generateScenarios() {
   const docUrl = document.getElementById('docUrl').value;
