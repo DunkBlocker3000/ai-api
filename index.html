@@ -1,21 +1,19 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>OpenAI Test Scenario Generator</title>
-  </head>
-  <body>
-    <h1>OpenAI Test Scenario Generator</h1>
-    <p>Enter the API documentation URL or paste the documentation here:</p>
-    <textarea id="input" rows="10" cols="50"></textarea>
-    <br />
-    <button id="generate">Generate Scenarios</button>
-    <br />
-    <br />
-    <div id="output"></div>
-    <script src="https://cdn.jsdelivr.net/npm/@openai/api@0.9.0/dist/web.min.js"></script>
-    <script src="main.js"></script>
-  </body>
+<html>
+<head>
+  <title>OpenAI API Test Scenarios Generator</title>
+</head>
+<body>
+  <h1>OpenAI API Test Scenarios Generator</h1>
+  <form>
+    <label for="input">Enter API documentation URL or JSON:</label><br>
+    <textarea id="input" name="input" rows="10" cols="50"></textarea><br>
+    <button type="button" id="generate-button">Generate Scenarios</button>
+  </form>
+  <h2>Scenarios:</h2>
+  <ul id="scenarios"></ul>
+
+  <script src="https://cdn.jsdelivr.net/npm/@openai/api@0.6.3/dist/web.min.js"></script>
+  <script src="main.js"></script>
+</body>
 </html>
