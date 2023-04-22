@@ -1,17 +1,17 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="utf-8">
-    <title>API Documentation URL</title>
+    <meta charset="UTF-8">
+    <title>API Scenario Generator</title>
   </head>
   <body>
-    <h1>API Documentation URL</h1>
+    <h1>API Scenario Generator</h1>
     <form>
-      <label for="url">Enter the URL of the API documentation:</label>
-      <br>
-      <input type="text" id="url" name="url" size="50">
-      <br><br>
-      <input type="submit" value="Submit">
+      <label for="doc-url">API Documentation URL:</label>
+      <input type="text" id="doc-url" name="doc-url"><br><br>
+      <input type="submit" value="Generate Scenarios">
     </form>
+    <div id="scenarios"></div>
+    <script src="script.js"></script>
   </body>
 </html>
