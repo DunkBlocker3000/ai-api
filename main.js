@@ -1,75 +1,75 @@
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+let apiKey;
 
-async function analyzeDocumentation(prompt) {
-  const response = await fetch("https://api.openai.com/v1/engines/davinci-codex/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${OPENAI_API_KEY}`
-    },
-    body: JSON.stringify({
-      prompt: prompt,
-      max_tokens: 500,
-      n: 1,
-      stop: ["###"]
-    })
-  });
-
-  const data = await response.json();
-  const completion = data.choices[0].text.trim();
-
-  return completion;
+function setApiKey() {
+  apiKey = process.env.OPENAI_API_KEY;
 }
 
-function generateScenarioList(completion) {
-  const regex = /(?<=\n- ).*/g;
-  const matches = completion.match(regex);
-  return matches;
+async function analyzeDocumentation() {
+  const response = await fetch(apiUrl);
+  const text = await response.text();
+  const parser = new DOMParser();
+  const htmlDocument = parser.parseFromString(text, "text/html");
+  const endpointList = htmlDocument.querySelectorAll("section[id^=endpoints]");
+  if (!endpointList.length) {
+    throw new Error("Could not find any API endpoints on the page");
+  }
+  const scenarios = [];
+  endpointList.forEach((endpoint) => {
+    const title = endpoint.querySelector("h1, h2, h3, h4, h5, h6");
+    if (!title) {
+      return;
+    }
+    const titleText = title.innerText.trim();
+    if (!titleText) {
+      return;
+    }
+    const methodList = endpoint.querySelectorAll("table>tbody>tr");
+    if (!methodList.length) {
+      return;
+    }
+    methodList.forEach((method) => {
+      const methodCells = method.querySelectorAll("td");
+      if (!methodCells.length) {
+        return;
+      }
+      const scenario = {
+        title: `${titleText} - ${methodCells[0].innerText.trim()}`,
+        steps: [],
+      };
+      methodCells[1]
+        .querySelectorAll("code")
+        .forEach((param) => scenario.steps.push(`Set ${param.innerText.trim()} to [value].`));
+      methodCells[2]
+        .querySelectorAll("code")
+        .forEach((param) => scenario.steps.push(`Set ${param.innerText.trim()} to [value].`));
+      scenarios.push(scenario);
+    });
+  });
+  return scenarios;
+}
+
+function generateScenarioList(scenarios) {
+  const scenarioList = document.getElementById("scenarioList");
+  scenarioList.innerHTML = "";
+  if (!scenarios.length) {
+    scenarioList.innerText = "No scenarios were found in the documentation.";
+    return;
+  }
+  scenarios.forEach((scenario, index) => {
+    const scenarioDiv = document.createElement("div");
+    const scenarioTitle = document.createElement("h3");
+    scenarioTitle.innerText = `${index + 1}. ${scenario.title}`;
+    scenarioDiv.appendChild(scenarioTitle);
+    const stepList = document.createElement("ul");
+    scenario.steps.forEach((step) => {
+      const stepItem = document.createElement("li");
+      stepItem.innerText = step.replace("[value]", "______");
+      stepList.appendChild(stepItem);
+    });
+    scenarioDiv.appendChild(stepList);
+    scenarioList.appendChild(scenarioDiv);
+  });
 }
 
 async function generateScenarios() {
-  const prompt = document.getElementById("prompt").value.trim();
-  const generateButton = document.getElementById("generateButton");
-  generateButton.disabled = true;
-
-  const resultsDiv = document.getElementById("results");
-  resultsDiv.innerHTML = "";
-
-  const loadingIndicator = document.createElement("p");
-  loadingIndicator.innerText = "Loading...";
-  resultsDiv.appendChild(loadingIndicator);
-
-  try {
-    const completion = await analyzeDocumentation(prompt);
-    const scenarios = generateScenarioList(completion);
-
-    if (scenarios.length > 0) {
-      const scenariosList = document.createElement("ul");
-      for (const scenario of scenarios) {
-        const scenarioItem = document.createElement("li");
-        scenarioItem.innerText = scenario;
-        scenariosList.appendChild(scenarioItem);
-      }
-      resultsDiv.innerHTML = "";
-      resultsDiv.appendChild(scenariosList);
-    } else {
-      const noResultsMessage = document.createElement("p");
-      noResultsMessage.innerText = "No scenarios found.";
-      resultsDiv.innerHTML = "";
-      resultsDiv.appendChild(noResultsMessage);
-    }
-  } catch (error) {
-    console.error(error);
-    const errorMessage = document.createElement("p");
-    errorMessage.innerText = "An error occurred while generating the scenarios.";
-    resultsDiv.innerHTML = "";
-    resultsDiv.appendChild(errorMessage);
-  }
-
-  generateButton.disabled = false;
-}
-
-if (OPENAI_API_KEY === undefined) {
-  const resultsDiv = document.getElementById("results");
-  resultsDiv.innerHTML = "OpenAI API key not set.";
-}
+  const apiUrl = document.getElementById("apiUrl").value
