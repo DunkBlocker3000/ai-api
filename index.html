@@ -1,97 +1,70 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8" />
+<head>
     <title>OpenAI Test Scenario Generator</title>
-  </head>
-  <body>
+</head>
+<body>
     <h1>OpenAI Test Scenario Generator</h1>
-    <label for="input-text">Enter your text:</label>
-    <br />
-    <textarea id="input-text" rows="10" cols="50"></textarea>
-    <br />
-    <button id="generate-scenarios" onclick="generateScenarios()">Generate Scenarios</button>
+    <label for="input">Enter your text here:</label>
+    <br>
+    <textarea id="input" rows="10" cols="50"></textarea>
+    <br>
+    <button onclick="generateScenarios()">Generate Scenarios</button>
+    <br>
     <div id="scenarios"></div>
-    <button id="create-tests" onclick="createTests()">Create Tests</button>
-    <script src="https://cdn.jsdelivr.net/npm/@openai/api@0.12.2/dist/web.min.js"></script>
+    <button onclick="createTests()">Create Tests</button>
+
+    <script src="https://cdn.jsdelivr.net/npm/@openai/api@0.12.0/dist/web.min.js"></script>
     <script>
-      const openaiApiKey = process.env.OPENAI_API_KEY;
+        function generateScenarios() {
+            const input = document.getElementById("input").value;
+            const prompt = "Provide a comprehensive list of scenarios to test the software described in this text.";
+            const completions = openai.complete({
+                engine: 'davinci',
+                prompt: prompt,
+                maxTokens: 60,
+                n: 1,
+                stop: '\n'
+            });
 
-      function generateScenarios() {
-        const inputText = document.getElementById("input-text").value.trim();
-        if (!inputText) {
-          alert("Please enter some text to generate scenarios.");
-          return;
+            completions.then(({data}) => {
+                const scenarios = data.choices[0].text.split('\n').filter((scenario) => scenario.trim() !== "");
+                const scenarioContainer = document.getElementById("scenarios");
+                scenarioContainer.innerHTML = "";
+                scenarios.forEach((scenario) => {
+                    const div = document.createElement("div");
+                    const radio = document.createElement("input");
+                    radio.type = "radio";
+                    radio.name = "scenario";
+                    radio.value = scenario;
+                    const label = document.createElement("label");
+                    label.textContent = scenario;
+                    div.appendChild(radio);
+                    div.appendChild(label);
+                    scenarioContainer.appendChild(div);
+                });
+            }).catch((error) => {
+                console.log(error);
+            });
         }
 
-        const prompt = "Provide a comprehensive list of scenarios to test the software described in this text.";
-        const completions = openai.complete({
-          engine: "davinci",
-          prompt: prompt,
-          maxTokens: 1024,
-          n: 1,
-          stop: "\n",
-          temperature: 0.5,
-          promptContext: inputText,
-        });
-
-        completions.then(function (response) {
-          const scenariosDiv = document.getElementById("scenarios");
-          scenariosDiv.innerHTML = "";
-          const scenarios = response.choices[0].text.trim().split("\n");
-          for (let i = 0; i < scenarios.length; i++) {
-            const scenario = scenarios[i].trim();
-            if (scenario) {
-              const radio = document.createElement("input");
-              radio.type = "radio";
-              radio.name = "scenario";
-              radio.value = scenario;
-              scenariosDiv.appendChild(radio);
-
-              const label = document.createElement("label");
-              label.for = "scenario";
-              label.innerHTML = scenario;
-              scenariosDiv.appendChild(label);
-
-              const br = document.createElement("br");
-              scenariosDiv.appendChild(br);
+        function createTests() {
+            const selectedScenario = document.querySelector('input[name="scenario"]:checked');
+            if (!selectedScenario) {
+                alert("Please select a scenario");
+                return;
             }
-          }
-        });
-      }
+            const scenario = selectedScenario.value;
+            const isApi = /api/i.test(scenario);
 
-      function createTests() {
-        const inputText = document.getElementById("input-text").value.trim();
-        const scenarioRadioButtons = document.getElementsByName("scenario");
-        let selectedScenario = "";
-        for (let i = 0; i < scenarioRadioButtons.length; i++) {
-          if (scenarioRadioButtons[i].checked) {
-            selectedScenario = scenarioRadioButtons[i].value;
-            break;
-          }
+            if (isApi) {
+                // Generate api files and output zip
+                console.log("Generating API files and outputting zip...");
+            } else {
+                // Generate csv file with scenario steps
+                console.log("Generating CSV file with scenario steps...");
+            }
         }
-
-        if (!selectedScenario) {
-          alert("Please select a scenario to create tests.");
-          return;
-        }
-
-        const outputFileName = "tests.zip";
-        let outputContent = "";
-        if (inputText.toLowerCase().includes("api")) {
-          // Create API test files and zip them
-          outputContent = "Sample API test file for " + selectedScenario;
-        } else {
-          // Create CSV file with scenarios and steps
-          outputContent = "Scenario, Steps\n" + selectedScenario + ", Step 1\n";
-        }
-
-        const blob = new Blob([outputContent], { type: "application/octet-stream" });
-        const link = document.createElement("a");
-        link.href = window.URL.createObjectURL(blob);
-        link.download = outputFileName;
-        link.click();
-      }
     </script>
-  </body>
+</body>
 </html>
