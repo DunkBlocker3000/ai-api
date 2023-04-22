@@ -1,56 +1,66 @@
-const input = document.getElementById('input');
-const generateButton = document.getElementById('generate-button');
-const scenariosList = document.getElementById('scenarios');
+const generateBtn = document.getElementById("generate-btn");
+generateBtn.addEventListener("click", generateScenarios);
 
-generateButton.addEventListener('click', () => {
-  const inputText = input.value.trim();
+function generateScenarios() {
+  const inputType = document.getElementById("input-type").value;
+  const input = document.getElementById("input").value;
+  const prompt = `Generate test scenarios for this API documentation:\n\n${input}`;
 
-  if (inputText.length === 0) {
-    alert('Please enter API documentation URL or JSON.');
-    return;
-  }
+  const openaiApiKey = process.env.OPENAI_API_KEY;
+  const openaiApiEndpoint = "https://api.openai.com/v1/engines/davinci-codex/completions";
 
-  let apiUrl = '';
-  if (inputText.startsWith('http')) {
-    apiUrl = inputText;
-  } else {
-    try {
-      const inputJson = JSON.parse(inputText);
-      apiUrl = inputJson.host + inputJson.basePath;
-    } catch {
-      alert('Invalid input format. Please enter a valid API documentation URL or JSON.');
-      return;
-    }
-  }
-
-  const apiKey = process.env.OPENAI_API_KEY;
-  const openai = new OpenAI(apiKey);
-
-  const prompt = `Given the API documentation located at ${apiUrl}, write test scenarios for the following endpoints and methods:\n`;
-
-  const completionsOptions = {
-    maxTokens: 1024,
-    n: 1,
-    stop: ['\n\n'],
-    temperature: 0.5,
+  const headers = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${openaiApiKey}`,
   };
 
-  scenariosList.innerHTML = '<li>Generating scenarios...</li>';
+  const data = {
+    prompt,
+    max_tokens: 200,
+    temperature: 0.5,
+    n: 1,
+    stop: "\n\n",
+  };
 
-  openai.complete(prompt, completionsOptions)
-    .then(response => {
-      const { choices } = response.data;
-      const scenarios = choices[0].text.trim().split('\n');
+  if (inputType === "url") {
+    fetch(input)
+      .then((response) => response.text())
+      .then((text) => {
+        data.prompt += `\n\n${text}`;
+        generateScenariosHelper(data, headers, openaiApiEndpoint);
+      })
+      .catch((error) => {
+        console.error(`Error fetching URL: ${input}`);
+        console.error(error);
+      });
+  } else if (inputType === "text") {
+    generateScenariosHelper(data, headers, openaiApiEndpoint);
+  } else {
+    console.error(`Invalid input type: ${inputType}`);
+  }
+}
 
-      scenariosList.innerHTML = '';
-      scenarios.forEach(scenario => {
-        const scenarioItem = document.createElement('li');
-        scenarioItem.textContent = scenario;
-        scenariosList.appendChild(scenarioItem);
+function generateScenariosHelper(data, headers, openaiApiEndpoint) {
+  fetch(openaiApiEndpoint, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(data),
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      const outputElement = document.getElementById("output");
+      outputElement.innerHTML = "";
+
+      data.choices[0].text.split("\n").forEach((scenario) => {
+        if (scenario) {
+          const scenarioElement = document.createElement("p");
+          scenarioElement.innerText = scenario;
+          outputElement.appendChild(scenarioElement);
+        }
       });
     })
-    .catch(error => {
-      scenariosList.innerHTML = '<li>An error occurred while generating scenarios. Please try again later.</li>';
+    .catch((error) => {
+      console.error("Error generating scenarios:");
       console.error(error);
     });
-});
+}
