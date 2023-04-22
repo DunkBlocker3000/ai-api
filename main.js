@@ -1,41 +1,43 @@
-window.addEventListener('DOMContentLoaded', () => {
-  const urlInput = document.getElementById('urlInput');
-  const textarea = document.getElementById('textarea');
-  const generateBtn = document.getElementById('generateBtn');
-  const output = document.getElementById('output');
+const openaiApiKey = process.env.OPENAI_API_KEY;
 
-  generateBtn.addEventListener('click', async () => {
-    output.innerText = 'Generating scenarios...';
-    let input;
-    if (urlInput.value) {
-      const response = await fetch(urlInput.value);
-      input = await response.text();
-    } else if (textarea.value) {
-      input = textarea.value;
-    } else {
-      output.innerText = 'Please provide a URL or enter API documentation in the text box.';
-      return;
-    }
+const form = document.querySelector("#form");
+const urlInput = document.querySelector("#url-input");
+const textInput = document.querySelector("#text-input");
+const scenarios = document.querySelector("#scenarios");
 
-    const data = {
-      model: 'text-davinci-002',
-      prompt: `Generate test scenarios for the following API documentation:\n${input}`,
-      temperature: 0.5,
-      max_tokens: 60,
-      n: 1,
-      stop: ['\n\n']
-    };
-    
-    const response = await fetch('https://api.openai.com/v1/engines/davinci-codex/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
-      },
-      body: JSON.stringify(data)
-    });
-    
-    const result = await response.json();
-    output.innerText = result.choices[0].text;
-  });
+form.addEventListener("submit", (event) => {
+  event.preventDefault();
+
+  const apiDocUrl = urlInput.value;
+  const apiDocText = textInput.value;
+
+  if (apiDocUrl) {
+    fetch(apiDocUrl)
+      .then((response) => response.text())
+      .then((text) => generateScenarios(text));
+  } else if (apiDocText) {
+    generateScenarios(apiDocText);
+  }
 });
+
+async function generateScenarios(apiDocText) {
+  const openaiApi = new OpenAI({
+    apiKey: openaiApiKey,
+  });
+
+  try {
+    const completions = await openaiApi.complete({
+      engine: "text-davinci-002",
+      prompt: `Generate test scenarios for the following API documentation:\n${apiDocText}`,
+      maxTokens: 2048,
+      n: 1,
+      stop: ["###"],
+    });
+
+    const generatedScenarios = completions.choices[0].text;
+    scenarios.innerHTML = `<h2>Generated Scenarios</h2><p>${generatedScenarios}</p>`;
+  } catch (error) {
+    console.error(error);
+    scenarios.innerHTML = "<p>Sorry, there was an error generating scenarios. Please try again.</p>";
+  }
+}
