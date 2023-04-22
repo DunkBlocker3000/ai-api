@@ -1,31 +1,31 @@
-const apiUrlInput = document.getElementById("apiUrl");
-const generateBtn = document.getElementById("generateBtn");
-const scenariosDiv = document.getElementById("scenarios");
+const scenariosList = document.getElementById("scenariosList");
 
-apiUrlInput.addEventListener("input", () => {
-  generateBtn.disabled = apiUrlInput.value.trim() === "";
-});
+function generateScenariosFromUrl() {
+  const urlInput = document.getElementById("urlInput").value;
+  fetch(urlInput)
+    .then((response) => response.text())
+    .then((data) => generateScenarios(data));
+}
 
-generateBtn.addEventListener("click", async () => {
-  scenariosDiv.innerHTML = "Loading...";
-  generateBtn.disabled = true;
-  const apiUrl = apiUrlInput.value.trim();
+function generateScenariosFromText() {
+  const apiTextArea = document.getElementById("apiTextArea").value;
+  generateScenarios(apiTextArea);
+}
 
-  try {
-    const response = await fetch(apiUrl);
-    const apiJson = await response.json();
-    const scenarios = generateScenarios(apiJson);
-    scenariosDiv.innerHTML = scenarios.length
-      ? scenarios.join("<br>")
-      : "No scenarios found.";
-  } catch (err) {
-    scenariosDiv.innerHTML = `Error: ${err.message}`;
-  } finally {
-    generateBtn.disabled = false;
-  }
-});
-
-function generateScenarios(apiJson) {
-  // Your scenario generation code here
+function generateScenarios(apiData) {
+  // Logic to parse the API data and generate scenarios
   // ...
+
+  // Example scenarios to be added to the list
+  const scenarios = ["Scenario 1", "Scenario 2", "Scenario 3"];
+
+  // Clear the list of previous scenarios
+  scenariosList.innerHTML = "";
+
+  // Add the new scenarios to the list
+  for (const scenario of scenarios) {
+    const listItem = document.createElement("li");
+    listItem.innerText = scenario;
+    scenariosList.appendChild(listItem);
+  }
 }
