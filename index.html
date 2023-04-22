@@ -1,20 +1,14 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
   <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>API Scenario Generator</title>
-    <script src="main.js" defer></script>
   </head>
   <body>
     <h1>API Scenario Generator</h1>
-    <p>Enter the URL for the API documentation:</p>
-    <form>
-      <input type="text" id="url" name="url" placeholder="https://example.com/docs" required />
-      <button type="submit">Generate Scenarios</button>
-    </form>
-    <hr />
-    <div id="scenarios"></div>
+    <label for="url-input">API Documentation URL:</label>
+    <input id="url-input" type="text" />
+    <button id="generate-button">Generate Scenarios</button>
+    <div id="scenario-list"></div>
+    <script src="main.js"></script>
   </body>
 </html>
