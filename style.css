@@ -1,3 +1,9 @@
-label {
-    display: block;
+h1 {
+  text-align: center;
 }
+label {
+  display: block;
+  margin-top: 1rem;
+}
+input {
+  width:
